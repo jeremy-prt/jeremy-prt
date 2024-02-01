@@ -1,4 +1,4 @@
-<h2 align="left">Salut 👋 ! Je m'appelle Jérémy et je viens d'Annecy !</h2>
+<h2 align="left">Salut 👋  ! Je m'appelle Jérémy et je viens d'Annecy !</h2>
 
 ###
 
