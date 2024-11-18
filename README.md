@@ -1,5 +1,5 @@
-<h1 align="center">Salut 👋,je suis Jeremy Perret</h1>
-<h3 align="center">Un développeur junior ayant une passion particulière pour le frontend</h3>
+<h1 align="left">Salut 👋,je suis Jeremy Perret</h1>
+<h3 align="left">Un développeur junior ayant une passion particulière pour le frontend</h3>
 
 - 🌱 Actuellement j'apprends **react, express, next, vue**
 
