@@ -4,6 +4,8 @@ import os
 import urllib.request
 
 USERNAME = "jeremy-prt"
+DISPLAY_NAME = "Jérémy"
+BIRTH_DATE = "2003-08-02"
 MIN_PCT = 5.0
 
 LANG_COLORS = {
@@ -37,8 +39,17 @@ def to_b64(url):
     return base64.b64encode(fetch(url)).decode()
 
 
-# Fetch images
-avatar_b64 = to_b64(f"https://github.com/{USERNAME}.png?size=64")
+# Compute age
+from datetime import date, datetime, timezone
+
+birth = date.fromisoformat(BIRTH_DATE)
+today = date.today()
+age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+
+# Fetch images — avatar from repo (custom photo), banner from repo
+avatar_b64 = to_b64(
+    f"https://raw.githubusercontent.com/{USERNAME}/{USERNAME}/main/avatar.png"
+)
 banner_b64 = to_b64(
     f"https://raw.githubusercontent.com/{USERNAME}/{USERNAME}/main/banner.png"
 )
@@ -60,8 +71,6 @@ for repo in repos:
 # Compute avg commits/year
 user = fetch_json(f"https://api.github.com/users/{USERNAME}")
 created = user.get("created_at", "2023-01-01T00:00:00Z")
-from datetime import datetime, timezone
-
 created_dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
 years = max(
     1, (datetime.now(timezone.utc) - created_dt).days / 365.25
@@ -156,7 +165,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
   <image x="{AVATAR_X}" y="{AVATAR_Y}" width="{AVATAR_SIZE}" height="{AVATAR_SIZE}" clip-path="url(#avatar-clip)" href="data:image/png;base64,{avatar_b64}"/>
   <circle cx="{AVATAR_X + AVATAR_SIZE//2}" cy="{AVATAR_Y + AVATAR_SIZE//2}" r="{AVATAR_SIZE//2}" fill="none" stroke="#0d1117" stroke-width="3"/>
 
-  <text x="{P}" y="{NAME_Y}" class="name">{USERNAME}</text>
+  <text x="{P}" y="{NAME_Y}" class="name">{DISPLAY_NAME} / {age} ans</text>
   <text x="{P}" y="{TITLE_Y}" class="section">Most used languages</text>
 
   {grid}
