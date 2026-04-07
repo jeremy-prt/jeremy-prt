@@ -257,7 +257,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
   <image x="{AVATAR_X}" y="{AVATAR_Y}" width="{AVATAR_SIZE}" height="{AVATAR_SIZE}" clip-path="url(#avatar-clip)" href="data:image/png;base64,{avatar_b64}"/>
   <circle cx="{ACX}" cy="{ACY}" r="{AVATAR_SIZE//2}" fill="none" stroke="#0d1117" stroke-width="3"/>
 
-  <text x="{P}" y="{NAME_Y}" class="name" opacity="0">{DISPLAY_NAME} / {age} ans<animate attributeName="opacity" from="0" to="1" dur="0.6s" begin="0.1s" fill="freeze"/></text>
+  <text x="{P}" y="{NAME_Y}" class="name" opacity="0">{DISPLAY_NAME} / {age} yo<animate attributeName="opacity" from="0" to="1" dur="0.6s" begin="0.1s" fill="freeze"/></text>
 
   <text x="{P}" y="{TITLE_Y}" class="section" opacity="0">Top {MAX_LANGS} most used languages<animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.4s" fill="freeze"/></text>
 
