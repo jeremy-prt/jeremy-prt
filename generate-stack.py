@@ -165,8 +165,8 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
 
   <image x="0" y="0" width="{WIDTH}" height="{BANNER_H}" preserveAspectRatio="xMidYMid slice" clip-path="url(#banner-clip)" href="data:image/png;base64,{banner_b64}"/>
 
-  <circle cx="{ACX}" cy="{ACY}" r="{RING_R}" fill="none" stroke="white" stroke-width="3" stroke-dasharray="{dash:.1f} {ring_circ - dash:.1f}" stroke-linecap="round">
-    <animateTransform attributeName="transform" type="rotate" from="0 {ACX} {ACY}" to="360 {ACX} {ACY}" dur="3s" repeatCount="indefinite"/>
+  <circle cx="{ACX}" cy="{ACY}" r="{RING_R}" fill="none" stroke="#b0b8c1" stroke-width="2.5" stroke-dasharray="{dash:.1f} {ring_circ - dash:.1f}" stroke-linecap="round" opacity="0.9">
+    <animateTransform attributeName="transform" type="rotate" from="0 {ACX} {ACY}" to="360 {ACX} {ACY}" dur="4.5s" repeatCount="indefinite"/>
   </circle>
 
   <image x="{AVATAR_X}" y="{AVATAR_Y}" width="{AVATAR_SIZE}" height="{AVATAR_SIZE}" clip-path="url(#avatar-clip)" href="data:image/png;base64,{avatar_b64}"/>
