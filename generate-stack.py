@@ -94,11 +94,11 @@ avg_commits = round(total_commits / years)
 # Filter languages
 total = sum(lang_bytes.values())
 sorted_langs = sorted(lang_bytes.items(), key=lambda x: -x[1])
+MAX_LANGS = 6
 data = [
     (name, count / total * 100, LANG_COLORS.get(name, DEFAULT_COLOR))
     for name, count in sorted_langs
-    if count / total * 100 >= MIN_PCT
-]
+][:MAX_LANGS]
 
 # SVG layout
 WIDTH = 840
@@ -166,7 +166,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
   <circle cx="{AVATAR_X + AVATAR_SIZE//2}" cy="{AVATAR_Y + AVATAR_SIZE//2}" r="{AVATAR_SIZE//2}" fill="none" stroke="#0d1117" stroke-width="3"/>
 
   <text x="{P}" y="{NAME_Y}" class="name">{DISPLAY_NAME} / {age} ans</text>
-  <text x="{P}" y="{TITLE_Y}" class="section">Most used languages</text>
+  <text x="{P}" y="{TITLE_Y}" class="section">Top {MAX_LANGS} most used languages</text>
 
   {grid}
 
