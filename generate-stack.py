@@ -6,7 +6,7 @@ import urllib.request
 USERNAME = "jeremy-prt"
 DISPLAY_NAME = "Jérémy"
 BIRTH_DATE = "2003-08-02"
-MIN_PCT = 5.0
+MAX_LANGS = 6
 
 LANG_COLORS = {
     "Swift": "#F05138", "TypeScript": "#3178C6", "HTML": "#E34C26",
@@ -39,14 +39,12 @@ def to_b64(url):
     return base64.b64encode(fetch(url)).decode()
 
 
-# Compute age
 from datetime import date, datetime, timezone
 
 birth = date.fromisoformat(BIRTH_DATE)
 today = date.today()
 age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
 
-# Fetch images — avatar from repo (custom photo), banner from repo
 avatar_b64 = to_b64(
     f"https://raw.githubusercontent.com/{USERNAME}/{USERNAME}/main/avatar.png"
 )
@@ -54,13 +52,11 @@ banner_b64 = to_b64(
     f"https://raw.githubusercontent.com/{USERNAME}/{USERNAME}/main/banner.png"
 )
 
-# Fetch languages
 repos = fetch_json(
     f"https://api.github.com/users/{USERNAME}/repos?per_page=100&sort=updated"
 )
 
 lang_bytes = {}
-total_commits = 0
 for repo in repos:
     if repo.get("fork"):
         continue
@@ -68,13 +64,10 @@ for repo in repos:
     for lang, count in langs.items():
         lang_bytes[lang] = lang_bytes.get(lang, 0) + count
 
-# Compute avg commits/year
 user = fetch_json(f"https://api.github.com/users/{USERNAME}")
 created = user.get("created_at", "2023-01-01T00:00:00Z")
 created_dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
-years = max(
-    1, (datetime.now(timezone.utc) - created_dt).days / 365.25
-)
+years = max(1, (datetime.now(timezone.utc) - created_dt).days / 365.25)
 
 non_fork_repos = [r for r in repos if not r.get("fork")]
 total_commits = 0
@@ -91,10 +84,8 @@ for repo in non_fork_repos:
 
 avg_commits = round(total_commits / years)
 
-# Filter languages
 total = sum(lang_bytes.values())
 sorted_langs = sorted(lang_bytes.items(), key=lambda x: -x[1])
-MAX_LANGS = 6
 data = [
     (name, count / total * 100, LANG_COLORS.get(name, DEFAULT_COLOR))
     for name, count in sorted_langs
@@ -108,7 +99,11 @@ BANNER_H = 210
 AVATAR_SIZE = 64
 AVATAR_X = P
 AVATAR_Y = BANNER_H - AVATAR_SIZE // 2
-NAME_Y = AVATAR_Y + AVATAR_SIZE + 24
+ACX = AVATAR_X + AVATAR_SIZE // 2
+ACY = AVATAR_Y + AVATAR_SIZE // 2
+RING_R = AVATAR_SIZE // 2 + 4
+
+NAME_Y = AVATAR_Y + AVATAR_SIZE + 34
 TITLE_Y = NAME_Y + 28
 COLS = 2
 COL_GAP = 32
@@ -121,6 +116,9 @@ ROWS = (len(data) + COLS - 1) // COLS
 FOOTER_Y = GRID_Y + ROWS * ROW_H + 8
 SVG_H = FOOTER_Y + 28
 
+ring_circ = 2 * 3.14159 * RING_R
+dash = ring_circ * 0.75
+
 grid = ""
 for i, (name, pct, color) in enumerate(data):
     col = i % COLS
@@ -128,13 +126,17 @@ for i, (name, pct, color) in enumerate(data):
     lx = P + col * (COL_W + COL_GAP)
     ly = GRID_Y + row * ROW_H
     bar_fill = COL_W * (pct / MAX_PCT)
+    delay = 0.5 + i * 0.15
     grid += (
-        f'<g transform="translate({lx},{ly})">\n'
+        f'<g transform="translate({lx},{ly})" opacity="0">\n'
+        f'  <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="{delay}s" fill="freeze"/>\n'
         f'  <circle cx="6" cy="7" r="5" fill="{color}"/>\n'
         f'  <text x="18" y="11" class="lang">{name}</text>\n'
         f'  <text x="{COL_W}" y="11" class="pct" text-anchor="end">{pct:.1f}%</text>\n'
         f'  <rect x="0" y="20" width="{COL_W}" height="{BAR_H}" rx="3" fill="#21262d"/>\n'
-        f'  <rect x="0" y="20" width="{bar_fill:.1f}" height="{BAR_H}" rx="3" fill="{color}"/>\n'
+        f'  <rect x="0" y="20" width="0" height="{BAR_H}" rx="3" fill="{color}">\n'
+        f'    <animate attributeName="width" from="0" to="{bar_fill:.1f}" dur="0.8s" begin="{delay + 0.2}s" fill="freeze"/>\n'
+        f"  </rect>\n"
         f"</g>\n"
     )
 
@@ -154,7 +156,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
       <path d="M{R},0 H{WIDTH-R} Q{WIDTH},0 {WIDTH},{R} V{BANNER_H} H0 V{R} Q0,0 {R},0 Z"/>
     </clipPath>
     <clipPath id="avatar-clip">
-      <circle cx="{AVATAR_X + AVATAR_SIZE//2}" cy="{AVATAR_Y + AVATAR_SIZE//2}" r="{AVATAR_SIZE//2}"/>
+      <circle cx="{ACX}" cy="{ACY}" r="{AVATAR_SIZE//2}"/>
     </clipPath>
   </defs>
 
@@ -163,22 +165,28 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
 
   <image x="0" y="0" width="{WIDTH}" height="{BANNER_H}" preserveAspectRatio="xMidYMid slice" clip-path="url(#banner-clip)" href="data:image/png;base64,{banner_b64}"/>
 
-  <image x="{AVATAR_X}" y="{AVATAR_Y}" width="{AVATAR_SIZE}" height="{AVATAR_SIZE}" clip-path="url(#avatar-clip)" href="data:image/png;base64,{avatar_b64}"/>
-  <circle cx="{AVATAR_X + AVATAR_SIZE//2}" cy="{AVATAR_Y + AVATAR_SIZE//2}" r="{AVATAR_SIZE//2}" fill="none" stroke="#0d1117" stroke-width="3"/>
-
-  <text x="{P}" y="{NAME_Y}" class="name">{DISPLAY_NAME} / {age} ans</text>
-
-  <rect x="{WIDTH - P - 116}" y="{NAME_Y - 18}" width="116" height="26" rx="13" fill="#21262d" stroke="#30363d" stroke-width="0.5"/>
-  <circle cx="{WIDTH - P - 116 + 12}" cy="{NAME_Y - 5}" r="3" fill="white">
-    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  <circle cx="{ACX}" cy="{ACY}" r="{RING_R}" fill="none" stroke="white" stroke-width="3" stroke-dasharray="{dash:.1f} {ring_circ - dash:.1f}" stroke-linecap="round">
+    <animateTransform attributeName="transform" type="rotate" from="0 {ACX} {ACY}" to="360 {ACX} {ACY}" dur="3s" repeatCount="indefinite"/>
   </circle>
-  <text x="{WIDTH - P - 116 + 20}" y="{NAME_Y - 1}" class="badge-txt">Available for work</text>
 
-  <text x="{P}" y="{TITLE_Y}" class="section">Top {MAX_LANGS} most used languages</text>
+  <image x="{AVATAR_X}" y="{AVATAR_Y}" width="{AVATAR_SIZE}" height="{AVATAR_SIZE}" clip-path="url(#avatar-clip)" href="data:image/png;base64,{avatar_b64}"/>
+  <circle cx="{ACX}" cy="{ACY}" r="{AVATAR_SIZE//2}" fill="none" stroke="#0d1117" stroke-width="3"/>
+
+  <text x="{P}" y="{NAME_Y}" class="name" opacity="0">{DISPLAY_NAME} / {age} ans<animate attributeName="opacity" from="0" to="1" dur="0.6s" begin="0.1s" fill="freeze"/></text>
+
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.3s" fill="freeze"/>
+    <rect x="{WIDTH - P - 116}" y="{NAME_Y - 18}" width="116" height="26" rx="13" fill="#21262d" stroke="#30363d" stroke-width="0.5"/>
+    <circle cx="{WIDTH - P - 116 + 12}" cy="{NAME_Y - 5}" r="3" fill="white">
+      <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="{WIDTH - P - 116 + 20}" y="{NAME_Y - 1}" class="badge-txt">Available for work</text>
+  </g>
+
+  <text x="{P}" y="{TITLE_Y}" class="section" opacity="0">Top {MAX_LANGS} most used languages<animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.4s" fill="freeze"/></text>
 
   {grid}
 
-  <text x="{WIDTH - P}" y="{FOOTER_Y + 14}" class="footer" text-anchor="end">~ {avg_commits} commits / year on average</text>
+  <text x="{WIDTH - P}" y="{FOOTER_Y + 14}" class="footer" text-anchor="end" opacity="0">~ {avg_commits} commits / year on average<animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.8s" fill="freeze"/></text>
 </svg>'''
 
 with open("tech-stack.svg", "w") as f:
