@@ -148,8 +148,6 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
     .pct {{ fill: #8b949e; font: 400 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; }}
     .footer {{ fill: #484f58; font: 400 11px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; }}
     .badge-txt {{ fill: #8b949e; font: 400 10px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; }}
-    @keyframes pulse {{ 0%,100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
-    .dot {{ animation: pulse 2s ease-in-out infinite; }}
   </style>
   <defs>
     <clipPath id="banner-clip">
@@ -171,7 +169,9 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
   <text x="{P}" y="{NAME_Y}" class="name">{DISPLAY_NAME} / {age} ans</text>
 
   <rect x="{WIDTH - P - 116}" y="{NAME_Y - 18}" width="116" height="26" rx="13" fill="#21262d" stroke="#30363d" stroke-width="0.5"/>
-  <circle class="dot" cx="{WIDTH - P - 116 + 12}" cy="{NAME_Y - 5}" r="3" fill="white"/>
+  <circle cx="{WIDTH - P - 116 + 12}" cy="{NAME_Y - 5}" r="3" fill="white">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
   <text x="{WIDTH - P - 116 + 20}" y="{NAME_Y - 1}" class="badge-txt">Available for work</text>
 
   <text x="{P}" y="{TITLE_Y}" class="section">Top {MAX_LANGS} most used languages</text>

@@ -1,5 +1,3 @@
 <p align="center">
-  <picture>
-    <img src="https://raw.githubusercontent.com/jeremy-prt/jeremy-prt/main/tech-stack.svg" alt="Tech Stack" />
-  </picture>
+  <img src="./tech-stack.svg" alt="Tech Stack" />
 </p>
