@@ -9,6 +9,8 @@ DISPLAY_NAME = "Jérémy"
 BIRTH_DATE = "2003-08-02"
 MAX_LANGS = 6
 START_YEAR = 2024
+# Objective-C only comes from vendored Sparkle headers in orby
+IGNORED_LANGS = {"Objective-C"}
 
 LANG_COLORS = {
     "Swift": "#F05138", "TypeScript": "#3178C6", "HTML": "#E34C26",
@@ -91,6 +93,8 @@ for repo in repos:
         continue
     langs = fetch_json(repo["languages_url"])
     for lang, count in langs.items():
+        if lang in IGNORED_LANGS:
+            continue
         lang_bytes[lang] = lang_bytes.get(lang, 0) + count
 
 # Commits since START_YEAR. Private ones only come back as restrictedContributionsCount
