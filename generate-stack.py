@@ -8,6 +8,7 @@ USERNAME = "jeremy-prt"
 DISPLAY_NAME = "Jérémy"
 BIRTH_DATE = "2003-08-02"
 MAX_LANGS = 6
+START_YEAR = 2024
 
 LANG_COLORS = {
     "Swift": "#F05138", "TypeScript": "#3178C6", "HTML": "#E34C26",
@@ -35,12 +36,12 @@ PHRASE_TIMES = [2, 6.5, 9, 14, 18.5, 23, 26, 31, 35.5, 39, 43, 47.5, 50, 53, 56,
 PHRASE_CYCLE = 60
 
 
-def fetch(url):
+def fetch(url, body=None):
     headers = {"User-Agent": "github-stack-gen"}
     token = os.environ.get("GH_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    req = urllib.request.Request(url, headers=headers)
+    req = urllib.request.Request(url, data=body, headers=headers)
     with urllib.request.urlopen(req) as r:
         return r.read()
 
@@ -49,8 +50,24 @@ def fetch_json(url):
     return json.loads(fetch(url))
 
 
-def to_b64(url):
-    return base64.b64encode(fetch(url)).decode()
+def fetch_all(url):
+    items, page = [], 1
+    while True:
+        batch = fetch_json(f"{url}&per_page=100&page={page}")
+        items += batch
+        if len(batch) < 100:
+            return items
+        page += 1
+
+
+def graphql(query):
+    body = json.dumps({"query": query}).encode()
+    return json.loads(fetch("https://api.github.com/graphql", body))["data"]
+
+
+def to_b64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 
 # Daily color
@@ -61,18 +78,12 @@ COLOR = DAILY_COLORS[today.timetuple().tm_yday % len(DAILY_COLORS)]
 birth = date.fromisoformat(BIRTH_DATE)
 age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
 
-# Images
-avatar_b64 = to_b64(
-    f"https://raw.githubusercontent.com/{USERNAME}/{USERNAME}/main/avatar.png"
-)
-banner_b64 = to_b64(
-    f"https://raw.githubusercontent.com/{USERNAME}/{USERNAME}/main/banner.png"
-)
+# Images (read from the checkout: raw.githubusercontent.com serves a cached copy for a few minutes after a push)
+avatar_b64 = to_b64("avatar.png")
+banner_b64 = to_b64("banner.png")
 
 # Languages
-repos = fetch_json(
-    f"https://api.github.com/users/{USERNAME}/repos?per_page=100&sort=updated"
-)
+repos = fetch_all(f"https://api.github.com/users/{USERNAME}/repos?type=owner")
 
 lang_bytes = {}
 for repo in repos:
@@ -82,25 +93,17 @@ for repo in repos:
     for lang, count in langs.items():
         lang_bytes[lang] = lang_bytes.get(lang, 0) + count
 
-# Commits
-user = fetch_json(f"https://api.github.com/users/{USERNAME}")
-created = user.get("created_at", "2023-01-01T00:00:00Z")
-created_dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
-years = max(1, (datetime.now(timezone.utc) - created_dt).days / 365.25)
-
-non_fork_repos = [r for r in repos if not r.get("fork")]
+# Commits since START_YEAR. Private ones only come back as restrictedContributionsCount
+# (shown on the profile, not split by type), and a query can span one year at most.
+now = datetime.now(timezone.utc)
 total_commits = 0
-for repo in non_fork_repos:
-    try:
-        contribs = fetch_json(
-            f"https://api.github.com/repos/{USERNAME}/{repo['name']}/contributors"
-        )
-        for c in contribs:
-            if c.get("login", "").lower() == USERNAME.lower():
-                total_commits += c.get("contributions", 0)
-    except Exception:
-        pass
+for year in range(START_YEAR, now.year + 1):
+    c = graphql(
+        f'{{ user(login: "{USERNAME}") {{ contributionsCollection(from: "{year}-01-01T00:00:00Z", to: "{year}-12-31T23:59:59Z") {{ totalCommitContributions restrictedContributionsCount }} }} }}'
+    )["user"]["contributionsCollection"]
+    total_commits += c["totalCommitContributions"] + c["restrictedContributionsCount"]
 
+years = (now - datetime(START_YEAR, 1, 1, tzinfo=timezone.utc)).days / 365.25
 avg_commits = round(total_commits / years)
 
 # Filter languages
@@ -263,7 +266,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
 
   {grid}
 
-  <text x="{WIDTH - P}" y="{FOOTER_Y + 14}" class="footer" text-anchor="end" opacity="0">~ {avg_commits} commits / year on average<animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.8s" fill="freeze"/></text>
+  <text x="{WIDTH - P}" y="{FOOTER_Y + 14}" class="footer" text-anchor="end" opacity="0">~ {avg_commits} commits / year since {START_YEAR}<animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.8s" fill="freeze"/></text>
 
   {ghost_svg}
 </svg>'''
@@ -271,4 +274,4 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org
 with open("tech-stack.svg", "w") as f:
     f.write(svg)
 
-print(f"Generated tech-stack.svg — {len(data)} languages, ~{avg_commits} commits/year, color: {COLOR}")
+print(f"Generated tech-stack.svg — {len(data)} languages, ~{avg_commits} commits/year since {START_YEAR}, color: {COLOR}")
